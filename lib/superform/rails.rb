@@ -24,62 +24,12 @@ module Superform
           :serialize,
         to: :@namespace
 
-      # The Field class is designed to be extended to create custom forms. To override,
-      # in your subclass you may have something like this:
-      #
-      # ```ruby
-      # class MyForm < Superform::Rails::Form
-      #   class MyLabel < Superform::Rails::Components::LabelComponent
-      #     def view_template(&content)
-      #       label(form: @field.dom.name, class: "text-bold", &content)
-      #     end
-      #   end
-      #
-      #   class Field < Field
-      #     def label(**attributes)
-      #       MyLabel.new(self, **attributes)
-      #     end
-      #   end
-      # end
-      # ```
-      #
-      # Now all calls to `label` will have the `text-bold` class applied to it.
-      class Field < Superform::Field
-        def button(**attributes)
-          Components::ButtonComponent.new(self, attributes:)
-        end
-
-        def input(**attributes)
-          Components::InputComponent.new(self, attributes:)
-        end
-
-        def checkbox(**attributes)
-          Components::CheckboxComponent.new(self, attributes:)
-        end
-
-        def label(**attributes, &)
-          Components::LabelComponent.new(self, attributes:, &)
-        end
-
-        def textarea(**attributes)
-          Components::TextareaComponent.new(self, attributes:)
-        end
-
-        def select(*collection, **attributes, &)
-          Components::SelectField.new(self, attributes:, collection:, &)
-        end
-
-        def title
-          key.to_s.titleize
-        end
-      end
-
       def initialize(model, action: nil, method: nil, **attributes)
         @model = model
         @action = action
         @method = method
         @attributes = attributes
-        @namespace = Namespace.root(key, object: model, field_class:)
+        @namespace = Namespace.root(key, object: model)
       end
 
       def around_template(&)
@@ -149,10 +99,6 @@ module Superform
 
         def form_method
           @method.to_s.downcase == "get" ? "get" : "post"
-        end
-
-        def field_class
-          self.class::Field
         end
     end
 

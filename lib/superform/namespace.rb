@@ -9,13 +9,13 @@ module Superform
   class Namespace < Node
     include Enumerable
 
-    attr_reader :object, :field_class
+    attr_reader :object
 
-    def initialize(key, parent:, object: nil, field_class: Field)
-      super(key, parent:)
+    def initialize(key, parent:, object: nil, factory: nil)
+      super(key, parent:, factory:)
       @object = object
-      @field_class = field_class
       @children = Hash.new
+      @factory = factory
       yield self if block_given?
     end
 
@@ -34,10 +34,10 @@ module Superform
     # end
     # ```
     def namespace(key, &)
-      create_child(key, self.class, object: object_for(key:), field_class:, &)
+      create_child(key, __callee__, object: object_for(key:), &)
     end
 
-    # Maps the `Object#proprety` and `Object#property=` to a field in a web form that can be
+    # Maps the `Object#property` and `Object#property=` to a field in a web form that can be
     # read and set by the form. For example, a User form might look like this:
     #
     # ```ruby
@@ -47,7 +47,7 @@ module Superform
     # end
     # ```
     def field(key, &)
-      create_child(key, field_class, object:, &)
+      create_child(key, __callee__, object:, &)
     end
 
     # Wraps an array of objects in Namespace classes. For example, if `User#addresses` returns
@@ -67,7 +67,7 @@ module Superform
     # The object within the block is a `Namespace` object that maps each object within the enumerable
     # to another `Namespace` or `Field`.
     def collection(key, &)
-      create_child(key, NamespaceCollection, field_class:, &)
+      create_child(key, __callee__, &)
     end
 
     # Creates a Hash of Hashes and Arrays that represent the fields and collections of the Superform.
@@ -95,8 +95,8 @@ module Superform
     end
 
     # Creates a root Namespace, which is essentially a form.
-    def self.root(*, **, &)
-      new(*, parent: nil, **, &)
+    def self.root(*, factory: Factory.new, **, &)
+      new(*, parent: nil, factory:, **, &)
     end
 
     protected
@@ -113,10 +113,18 @@ module Superform
 
     private
 
+    def create_child(key, *, **, &)
+      register_child(key) { factory.build(key, *, parent: self, **, &) }
+    end
+
     # Checks if the child exists. If it does then it returns that. If it doesn't, it will
     # build the child.
-    def create_child(key, child_class, **, &)
-      @children.fetch(key) { @children[key] = child_class.new(key, parent: self, **, &) }
+    def register_child(key)
+      if @children.key?(key)
+        raise DuplicateNameError, "#{key} already exists as a child on #{self.key}"
+      else
+        @children[key] = yield
+      end
     end
   end
 end

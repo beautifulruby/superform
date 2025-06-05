@@ -1,7 +1,8 @@
 RSpec.describe Superform::Namespace do
+  subject(:parent) { described_class.root(:foo) }
+
   describe "#namespace" do
     it "yields a child namespace" do
-      parent = described_class.new(:foo, parent: nil, object: nil)
       parent.namespace(:bar) do |child|
         expect(child).to be_a(described_class)
         expect(child.key).to eq(:bar)
@@ -11,22 +12,36 @@ RSpec.describe Superform::Namespace do
 
   describe "#field" do
     it "yields the field" do
-      parent = described_class.new(:foo, parent: nil, object: nil)
       parent.field(:bar) do |child|
         expect(child).to be_a(Superform::Field)
         expect(child.key).to eq(:bar)
       end
     end
+
+    context 'when adding a field under the same name' do
+      it 'throws an exception about the conflicting naming' do
+        expect { 2.times { parent.field(:foo) } }.to raise_error(Superform::DuplicateNameError)
+      end
+    end
+
+    context 'with another factory' do
+      subject(:parent) { described_class.root(:foo, factory: Superform::Rails::Factory.new) }
+
+      it "builds a field based on the namespaced Field class" do
+        parent.field(:bar) do |child|
+          expect(child).to be_a(Superform::Rails::Field)
+          expect(child.key).to eq(:bar)
+        end
+      end
+    end
   end
 
   describe "#collection" do
-    it "yields a namespace collection" do
-      parent = described_class.new(
-        :foo,
-        parent: nil,
-        object: double("object", bar: [{ baz: "A" }])
-      )
+    subject(:parent) { described_class.root(:foo, object:) }
 
+    let(:object) { double("object", bar: [{ baz: "A" }]) }
+
+    it "yields a namespace collection" do
       parent.collection(:bar) do |child|
         expect(child).to be_a(Superform::Namespace)
         expect(child.key).to eq(0)
@@ -35,9 +50,9 @@ RSpec.describe Superform::Namespace do
   end
 
   describe "#serialize" do
+    let(:object) { double("object", bar: "A", baz: "B") }
     it "returns the serialized representation of the fields" do
-      object = double("object", bar: "A", baz: "B")
-      namespace = described_class.new(:foo, parent: nil, object:) do |parent|
+      namespace = described_class.root(:foo, object:) do |parent|
         parent.field(:bar)
         parent.field(:baz)
       end
@@ -48,7 +63,7 @@ RSpec.describe Superform::Namespace do
 
   describe "#each" do
     it "yields each field" do
-      namespace = described_class.new(:foo, parent: nil, object: nil) do |parent|
+      namespace = described_class.root(:foo) do |parent|
         parent.field(:bar)
         parent.field(:baz)
       end
@@ -62,7 +77,7 @@ RSpec.describe Superform::Namespace do
 
   describe "#assign" do
     it "assigns the value to the fields" do
-      namespace = described_class.new(:foo, parent: nil, object: nil) do |parent|
+      namespace = described_class.root(:foo) do |parent|
         parent.field(:bar)
         parent.field(:baz)
       end
