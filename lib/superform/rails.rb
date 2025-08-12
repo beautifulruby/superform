@@ -14,6 +14,9 @@ module Superform
     # The `Form` component also handles Rails authenticity tokens via the `authenticity_toklen_field`
     # method and the HTTP verb via the `_method_field`.
     class Form < Component
+      include Phlex::Rails::Helpers::FormAuthenticityToken
+      include Phlex::Rails::Helpers::Routes
+
       attr_accessor :model
 
       delegate \
@@ -115,7 +118,7 @@ module Superform
           input(
             name: "authenticity_token",
             type: "hidden",
-            value: helpers.form_authenticity_token
+            value: form_authenticity_token
           )
         end
 
@@ -144,7 +147,7 @@ module Superform
         end
 
         def form_action
-          @action ||= helpers.url_for(action: resource_action)
+          @action ||= url_for(action: resource_action)
         end
 
         def form_method
