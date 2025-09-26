@@ -60,4 +60,78 @@ RSpec.describe Superform::Rails::Form::Field do
       expect(component.type).to eq("radio")
     end
   end
+
+  describe "HTML5 client-side validations" do
+    context "input" do
+      it "adds required when presence validation exists" do
+        component = field.input
+        expect(component.field_attributes[:required]).to eq(true)
+      end
+
+      it "does not add required when no presence validation" do
+        component = form.field(:last_name).input
+        expect(component.field_attributes.key?(:required)).to eq(false)
+      end
+
+      it "allows required: false to override" do
+        component = field.input(required: false)
+        attrs = component.send(:attributes)
+        expect(attrs[:required]).to eq(false)
+      end
+    end
+
+    context "checkbox" do
+      it "adds required when presence validation exists" do
+        component = field.checkbox
+        expect(component.field_attributes[:required]).to eq(true)
+      end
+
+      it "does not add required when no presence validation" do
+        component = form.field(:last_name).checkbox
+        expect(component.field_attributes.key?(:required)).to eq(false)
+      end
+
+      it "allows required: false to override" do
+        component = field.checkbox(required: false)
+        attrs = component.send(:attributes)
+        expect(attrs[:required]).to eq(false)
+      end
+    end
+
+    context "textarea" do
+      it "adds required when presence validation exists" do
+        component = field.textarea
+        expect(component.field_attributes[:required]).to eq(true)
+      end
+
+      it "does not add required when no presence validation" do
+        component = form.field(:last_name).textarea
+        expect(component.field_attributes.key?(:required)).to eq(false)
+      end
+
+      it "allows required: false to override" do
+        component = field.textarea(required: false)
+        attrs = component.send(:attributes)
+        expect(attrs[:required]).to eq(false)
+      end
+    end
+
+    context "select" do
+      it "adds required when presence validation exists" do
+        component = field.select("a", "b")
+        expect(component.field_attributes[:required]).to eq(true)
+      end
+
+      it "does not add required when no presence validation" do
+        component = form.field(:last_name).select("a", "b")
+        expect(component.field_attributes.key?(:required)).to eq(false)
+      end
+
+      it "allows required: false to override" do
+        component = field.select("a", "b", required: false)
+        attrs = component.send(:attributes)
+        expect(attrs[:required]).to eq(false)
+      end
+    end
+  end
 end

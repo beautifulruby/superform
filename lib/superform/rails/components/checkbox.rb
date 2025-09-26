@@ -2,6 +2,8 @@ module Superform
   module Rails
     module Components
       class Checkbox < Field
+        prepend Concerns::Requirable
+
         def view_template(&)
           # Rails has a hidden and checkbox input to deal with sending back a value
           # to the server regardless of if the input is checked or not.

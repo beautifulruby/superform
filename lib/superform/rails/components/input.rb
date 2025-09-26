@@ -2,6 +2,8 @@ module Superform
   module Rails
     module Components
       class Input < Field
+        prepend Concerns::Requirable
+
         def view_template(&)
           input(**attributes)
         end

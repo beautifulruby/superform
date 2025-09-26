@@ -2,6 +2,8 @@ module Superform
   module Rails
     module Components
       class Select < Field
+        prepend Concerns::Requirable
+
         def initialize(*, collection: [], **, &)
           super(*, **, &)
           @collection = collection
